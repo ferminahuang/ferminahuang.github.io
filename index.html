@@ -22,7 +22,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:32px}
 </style></head><body>
 <nav><div class="w"><b>黄海慧</b><div class="l"><a href="#about">关于</a><a href="#projects">项目</a><a href="#exp">经历</a><a href="#skills">技能</a><a href="#contact">联系</a></div></div></nav>
 <header class="hero"><div class="w"><h1>黄海慧<br><span>AI Agent / 智能服务产品经理</span></h1>
-<p>4 年一线 B 端服务经验（上海清算所 + 微软亚太区 Premier 企业客户），用 Dify 独立搭建并评测电商售后 Agent 与金融智能客服 Demo，也做过量化交易 Agent 和求职助手插件。擅长把一线高频问题归纳为可标准化、可产品化的需求。</p>
+<p>4 年一线 B 端服务经验（上海清算所 + 微软亚太区 Premier 企业客户），用 Dify 独立搭建并评测电商售后 Agent、金融智能客服与语音客服（呼入呼出评测）Demo，也做过量化交易 Agent 和求职助手插件。擅长把一线高频问题归纳为可标准化、可产品化的需求。</p>
 <a class="btn" href="#projects">查看项目</a><a class="btn o" href="#contact">联系我</a>
 <div class="stats"><div class="stat"><b>4 年</b><small>B 端一线服务经验（上海清算所 + 微软）</small></div><div class="stat"><b>278 条</b><small>FAQ 知识库搭建与季度运营 · 上海清算所</small></div><div class="stat"><b>4 个</b><small>业务及系统上线验收测试 · 上海清算所</small></div><div class="stat"><b>~220 个/月</b><small>Premier 企业客户 Case · 微软</small></div></div></div></header>
 <section id="about"><div class="w"><h2>关于我</h2><p class="sub">从服务一线走向智能服务产品</p><div class="grid">
@@ -30,6 +30,58 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:32px}
 <div class="card"><h3>🤖 Agent 实战</h3><p>基于 Claude + Python 独立完成需求拆解、Workflow 编排、工具调用与 API 集成，并通过风控修复与无偏回测复核持续迭代。</p></div>
 <div class="card"><h3>📚 知识库与落地</h3><p>搭建并按季度运营 FAQ 知识库，经验可直接迁移至智能客服 / RAG 知识库建设；熟悉上线测试、跨团队推动与问题闭环。</p></div></div></div></section>
 <section id="projects" style="background:#fff"><div class="w"><h2>项目案例</h2><p class="sub">以产品经理视角拆解：问题 → 方案 → 我的角色 → 成果</p>
+<div class="case"><span class="tag">智能客服</span><span class="tag">语音 Agent</span><span class="tag">Dify · 呼入呼出</span><span class="tag">个人作品 Demo</span><h3>金融语音客服 Agent Demo：呼入呼出 + 评测闭环</h3>
+<p style="color:var(--mute);font-size:14px;margin-bottom:8px">个人作品集 Demo，未商用、未接入真实电话线路。语音通过文字标记模拟（如 [静音5s]、[打断]、[呼出:到期提醒]）；客户、账户与后端数据均为 mock。只用上海清算所公开 FAQ，与其无隶属关系。</p>
+<p style="font-size:15px;margin-bottom:14px">对外数字是盲测 <b>holdout2 @ v7 解决率 85%（17/20）</b>，转人工判断准确率 <b>96%（24/25）</b>。调优集 100% 不能直接当泛化能力。</p>
+<div class="cols"><div><h4>问题</h4><ul>
+<li>对照天润融通「AI 产品经理（客服智能体）」对呼入呼出、Agent 编排、评测闭环和金融合规的要求，在已有清算所公开 FAQ 文本客服上，扩展一套可评测的呼入 + 呼出语音客服。</li>
+<li>要证明的是：能把一通电话从进线到挂断拆清楚，用指标驱动多轮迭代，并诚实暴露边界。</li>
+<li>呼入覆盖咨询、核验、投诉转人工；呼出覆盖到期提醒、满意度、缴费提醒、勿扰。合规上不做收益或减免承诺，未核验不泄露信息，守住外呼时段和勿扰，并拒绝代查他人。</li></ul></div>
+<div><h4>方案</h4>
+<div class="flow"><span>文字（模拟 ASR）</span><i>→</i><span>标记解析</span><i>→</i><span>意图路由</span><i>→</i><span>业务 / 外呼规则或 LLM</span><i>→</i><span>合规质检</span><i>→</i><span>回复（模拟 TTS）</span></div>
+<ul>
+<li>呼入和呼出放在同一个 Dify Chatflow。消息前缀 [呼出:场景] 用于分流；呼出首轮统一报身份，并说明「本通话可能被录音」。</li>
+<li>编排分为路由、业务、合规质检。Mock 工具包括核验、查账户、工单、转人工、勿扰、评分，由 FastAPI 经 ngrok 反代给 Dify 调用。</li>
+<li>向量额度耗尽后，把 56 条带出处 FAQ 写进业务 Agent 提示，保证评测可复现，延迟因此上升。额度恢复后应迁回向量检索。</li>
+<li>合规按清单判定：质检只输出 PASS / FIX:规则号；不通过则转人工或礼貌结束，避免越改越偏。</li>
+<li>外呼里的知晓、满意度、勿扰先用规则命中再调工具，其余交给 LLM，降低误转人工和漏登记风险。</li>
+<li>后端提供 /reset。每条用例开始前清空勿扰名单和核验状态，避免用例串扰。</li></ul></div></div>
+<h4 style="margin-top:18px">评测</h4>
+<ul>
+<li>脚本 eval_runner.py 调 Dify Chatflow API，关键词初筛解决率、转人工、违规、思考泄露；再人工对照期望行为与知识库出处。工具是否真正调用，以后端日志为准。</li>
+<li>解决率分母是「应自助解决」用例：未转人工、无违规、行为符合预期。严格口径把思考过程泄露也算失败。</li></ul>
+<h4 style="margin-top:16px">调优集（test_cases_v2，21 条）</h4>
+<div style="overflow-x:auto"><table style="min-width:720px"><tr><th>轮次</th><th>版本</th><th>解决率</th><th>严格解决率</th><th>转人工判断准确率</th><th>违规</th><th>思考泄露</th></tr>
+<tr><td>第 1 轮</td><td>v4</td><td>50%（7/14）</td><td>29%（4/14）</td><td>81%</td><td>0%</td><td>52%</td></tr>
+<tr><td>第 2 轮</td><td>v5</td><td>71%（10/14）</td><td>71%</td><td>81%</td><td>0%</td><td><b>0%</b></td></tr>
+<tr><td>第 3 轮</td><td>v6</td><td><b>100%（14/14）</b></td><td>100%</td><td><b>100%</b></td><td>0%</td><td>0%</td></tr></table></div>
+<ul>
+<li>第 2 轮主要修：去掉 &lt;think&gt; 泄露、清单质检、呼出真实调用勿扰 / 时段 / 评分、按位复述身份信息、工具超时降级。</li>
+<li>第 3 轮主要修：呼出知晓 / 满意度规则路由、同音词表、TTS 前过滤「【系统】」、时段优先于勿扰名单、评测 reset。</li>
+<li>第 3 轮 100% 是调优集结果，不能直接当泛化能力。v7 在这份调优集上相对 v6 无回归：解决率仍 100%，转人工判断准确率仍 100%。</li></ul>
+<h4 style="margin-top:16px">留出集（措辞不与调优集重复）</h4>
+<div style="overflow-x:auto"><table style="min-width:680px"><tr><th>集合</th><th>版本</th><th>解决率</th><th>转人工判断准确率</th><th>说明</th></tr>
+<tr><td>holdout（28 条）</td><td>v6</td><td><b>81%（17/21）</b></td><td>100%</td><td style="text-align:left">首次盲测；暴露代查隐私与勿扰未登记</td></tr>
+<tr><td>holdout（同集，仅参考）</td><td>v7</td><td>100%（21/21）</td><td>100%</td><td style="text-align:left">失败用例已驱动 v7，不再盲</td></tr>
+<tr><td><b>holdout2（25 条，盲测）</b></td><td>v7</td><td><b>85%（17/20）</b></td><td><b>96%（24/25）</b></td><td style="text-align:left">v7 后唯一盲测；零违规、零编造</td></tr></table></div>
+<div class="cols"><div><h4 style="margin-top:16px">v7：隐私与勿扰</h4><ul>
+<li>holdout 暴露代查隐私和勿扰未登记后做定向修复。规则按句式泛化，不照抄用例原句。</li>
+<li>拒绝代查 / 他人信息：新增意图；核验只认「我叫 / 我是」等第一人称姓名；出现第三方则不进入核验。</li>
+<li>勿扰动作不可丢：扩展勿扰说法；合规质检打回时，若候选回复要求登记勿扰，仍保留 add_dnd。</li>
+<li>附带：呼出首轮统一开场；满意度词表与 10 分制换算；有评分倾向必须输出评分标记。</li>
+<li>盲测 holdout2 上，代查 4 条、勿扰相关用例通过，本人核验正向用例通过。仍失败 3 条：意图把「规则类 FAQ」误判成账户查询 2 条；知识已答对却额外转人工 1 条。下轮优先修意图路由，以及「能答则不转人工」。</li></ul></div>
+<div><h4 style="margin-top:16px">边界</h4><ul>
+<li>已做到呼入呼出状态、转人工、勿扰、时段、核验、评分的工具闭环；多轮评测和盲测可以复核。已跑集合上知识带出处、零编造。隐私与勿扰有针对性修复，并用日志验证。</li>
+<li>无真实 ASR / TTS / 打断检测，语音用文字模拟。未商用，无真实呼叫中心流量。调优集 100% 不等于生产可用。</li>
+<li>延迟约 6–17 秒/轮，真实电话通常要求首句 1–2 秒内出声，当前差距明显。规则与固定话术约 1–6 秒；知识问答单轮常见 9–17 秒；多轮核验合计可到 28–45 秒。</li>
+<li>知识内置在提示词里。额度恢复后应迁回向量检索。</li>
+<li>上海清算所的业务系统交付与机构 FAQ 是相邻真实经验，用来说明「需求 → 方案 → 上线 → 看数据 → 迭代」，不替代语音坐席上线经历。</li></ul>
+<h4 style="margin-top:12px">延迟（每轮，约）</h4>
+<table><tr><th>集合</th><th>P50 / P90</th></tr>
+<tr><td>调优集 v6 / v7</td><td>约 6–7s / 11–12s</td></tr>
+<tr><td>holdout / holdout2</td><td>约 6–10s / 14–17s</td></tr></table></div></div>
+<p style="margin-top:12px;font-size:14px">语音客服 Agent v7：<a href="https://udify.app/chat/oMw7oa97sCRzLqRt" target="_blank">udify.app/chat/oMw7oa97sCRzLqRt</a><br>配套原金融文本客服 Demo：<a href="https://udify.app/chat/4uRdO5z9tzur5IKA" target="_blank">udify.app/chat/4uRdO5z9tzur5IKA</a></p>
+<p style="color:var(--mute);font-size:14px;margin-top:6px">可在 v7 里用文字标记试呼出，例如 [呼出:满意度回访]、[呼出:到期提醒]，以及代查「帮我老公查账户」（应拒绝并要求本人）。</p></div>
 <div class="case"><span class="tag">AI Agent</span><span class="tag">Dify · DeepSeek · Function Calling</span><span class="tag">个人作品 Demo</span><h3>电商售后 AI Agent Demo：从"会回答"到"能办事"</h3>
 <p style="color:var(--mute);font-size:14px;margin-bottom:14px">2026.10.10 独立在 Dify 上搭建，面向电商客服 / 售后 Agent 岗位。全部为模拟数据，与任何电商平台无关，未上线给真实用户使用。</p>
 <div class="cols"><div><h4>问题</h4><ul><li>售后咨询量大、规则多，而且必须真正"办完"：查订单、判断能不能退、选方案、建单、通知商家。只会回答政策的 FAQ 机器人帮不上忙，用户最后还得转人工。</li><li>要验证的是：大模型 Agent 能否在规则约束下调用工具，把一张售后单从头办到尾，遇到边界情况时连同摘要正确交给人工。</li></ul>
